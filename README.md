@@ -29,6 +29,8 @@
 git clone <this-repo> && cd cyberbadge
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
+# 可选：文档 / OCR / 图像能力（见 docs/capabilities.md）
+pip install -r requirements-tools.txt
 cp .env.example .env        # 填 LLM_API_KEY（任何 OpenAI 兼容接口）
 uvicorn device.main:app --host 0.0.0.0 --port 8000
 ```

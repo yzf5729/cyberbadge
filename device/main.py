@@ -16,10 +16,26 @@ from fastapi.staticfiles import StaticFiles
 load_dotenv()
 
 from .agent import chat  # noqa: E402
+from .registry import REGISTRY  # noqa: E402
 
 WEB_DIR = pathlib.Path(__file__).resolve().parent.parent / "web"
 app = FastAPI(title="CyberBadge", version="0.1.0")
 TASKS: dict[str, dict] = {}
+
+
+@app.get("/api/agents")
+async def list_agents():
+    """顶部头像条：本地 + 远程 agent 及其在线状态。"""
+    return {"agents": REGISTRY.list()}
+
+
+@app.post("/api/agents/{agent_id}/heartbeat")
+async def heartbeat(agent_id: str, payload: dict | None = None):
+    busy = (payload or {}).get("busy")
+    agent = REGISTRY.heartbeat(agent_id, busy)
+    if not agent:
+        return JSONResponse({"error": "unknown agent"}, status_code=404)
+    return {"ok": True, "status": agent.status()}
 
 
 @app.get("/api/health")

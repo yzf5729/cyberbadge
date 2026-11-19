@@ -29,6 +29,8 @@ Turn a cheap Linux board into an **always-on host for an AI agent**: the device 
 git clone <this-repo> && cd cyberbadge
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
+# optional: docs / OCR / image tools (see docs/capabilities.md)
+pip install -r requirements-tools.txt
 cp .env.example .env        # set LLM_API_KEY (any OpenAI-compatible API)
 uvicorn device.main:app --host 0.0.0.0 --port 8000
 ```

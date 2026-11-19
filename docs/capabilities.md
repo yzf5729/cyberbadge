@@ -75,7 +75,18 @@ sudo apt install -y --no-install-recommends \
 - Hub 存 `last_seen`，PWA 顶部头像条实时变色；
 - 远程 agent 掉线不影响本地 agent，UI 自动降级。
 
-## 6. 明确不做（v1）
+## 6. 实现状态（v1）
+
+- ✅ `device/tools.py`：文件、docx/xlsx/pptx 读取、PDF 文本、OCR、图像操作、LibreOffice 转换、网页抓取
+- ✅ `device/office_convert.py`：LibreOffice headless（单并发 + 内存闸门 + 超时 + 隔离 profile）
+- ✅ `device/registry.py`：本地/远程 agent 注册表 + 心跳状态（online/busy/offline）
+- ✅ `web/`：顶部头像条（彩色=在线，灰色=离线）
+- ⏳ `image_generate` / `image_edit`：接口待接远端 API（v1.5）
+- ⏳ Office "编辑"（edit_docx 等）：先做读取，写操作随 v1.1
+
+依赖：`pip install -r requirements-tools.txt`；LibreOffice 见第 3 节。
+
+## 7. 明确不做（v1）
 
 - 本地跑生图模型（SDXL/Flux）——显存不够；
 - 本地跑大语言模型——内存不够，走云端；

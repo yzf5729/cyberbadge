@@ -19,3 +19,15 @@ textarea { flex:1; resize:none; max-height:120px; padding:10px 12px; border-radi
   border:1px solid var(--line); background:var(--panel); color:var(--text); font:inherit; outline:none; }
 button { width:44px; height:44px; border-radius:50%; border:0; background:var(--accent); color:#fff; font-size:20px; }
 button:disabled { opacity:.5; }
+
+/* agent 头像条（QQ 式在线状态） */
+.agents { display:flex; gap:10px; padding:10px 16px; overflow-x:auto; border-bottom:1px solid var(--line); }
+.agent { display:flex; flex-direction:column; align-items:center; gap:4px; min-width:56px;
+  background:none; border:0; color:var(--muted); font-size:11px; cursor:pointer; padding:2px; }
+.agent .ava { width:40px; height:40px; border-radius:50%; display:flex; align-items:center;
+  justify-content:center; font-size:20px; background:var(--panel); border:2px solid var(--line); }
+.agent.online .ava { border-color:#22c55e; }
+.agent.busy .ava { border-color:#f59e0b; }
+.agent.offline { opacity:.45; }
+.agent.offline .ava { filter:grayscale(1); border-color:var(--line); }
+.agent.active .ava { box-shadow:0 0 0 3px rgba(79,140,255,.35); border-color:var(--accent); }
