@@ -73,7 +73,7 @@ class AgentRegistry:
         return [
             Agent(id="dsh-demo", name="DSH", kind="remote", icon="🧠", demo=True,
                   capabilities=["chat", "files", "office", "web"]),
-            Agent(id="hermes-demo", name="霜序", kind="remote", icon="🐋", demo=True,
+            Agent(id="hermes-demo", name="Hermes", kind="remote", icon="🐋", demo=True,
                   capabilities=["chat", "memory", "image", "browser"]),
         ]
 
