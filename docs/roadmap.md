@@ -8,6 +8,16 @@
 - [ ] 流式输出
 - [ ] 本地记忆（SQLite）持久化
 
+## M0 原型机（插电 + Wi-Fi + 4–5" 触屏）
+
+- [ ] 采购：Orange Pi Zero 3 4GB、5" HDMI 触屏、32GB TF、5V/3A 电源
+- [ ] 烧录 Armbian 并联网（Wi-Fi client）
+- [ ] 装 Chromium + onboard 虚拟键盘，验证 kiosk 全屏
+- [ ] 部署 `device/` 与 `cyberbadge.service`（systemd 自启）
+- [ ] 开机自启 Chromium kiosk 指向 `http://127.0.0.1:8000`
+- [ ] 真机体验记录：800×480 下的布局问题、触摸精度、发热
+- [ ] 拍照 + BOM 实测价格回填文档
+
 ## v0.2 语音
 
 - [ ] VAD + 云端流式 ASR
