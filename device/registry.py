@@ -54,7 +54,7 @@ class AgentRegistry:
             id="builtin",
             name="CyberBadge",
             kind="local",
-            icon="🪪",
+            icon="🤖",
             capabilities=[
                 "files", "docx", "xlsx", "pptx", "pdf", "ocr",
                 "image", "convert", "web", "browser",
