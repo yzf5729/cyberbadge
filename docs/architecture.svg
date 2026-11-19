@@ -13,7 +13,7 @@
   </defs>
 
   <rect width="1100" height="560" fill="#0f1115"/>
-  <text x="40" y="52" class="t" font-size="26" font-weight="700">Agent Box · 架构</text>
+  <text x="40" y="52" class="t" font-size="26" font-weight="700">CyberBadge · 架构</text>
   <text x="40" y="78" class="m" font-size="14">设备常驻 agent，手机借屏，模型走云端 API —— 硬件成本 250–450 元</text>
 
   <!-- phone -->
@@ -25,7 +25,7 @@
 
   <!-- device -->
   <rect class="box accent" x="320" y="180" width="300" height="190"/>
-  <text x="470" y="218" class="t" font-size="17" font-weight="700" text-anchor="middle">Agent Box 设备</text>
+  <text x="470" y="218" class="t" font-size="17" font-weight="700" text-anchor="middle">CyberBadge 设备</text>
   <text x="470" y="242" class="m" font-size="13" text-anchor="middle">Linux SBC · FastAPI</text>
   <text x="470" y="268" class="m" font-size="13" text-anchor="middle">agent 循环 + 工具调用</text>
   <text x="470" y="292" class="m" font-size="13" text-anchor="middle">任务队列 · 记忆</text>

@@ -15,7 +15,7 @@ MODEL = os.environ.get("LLM_MODEL", "deepseek-chat")
 MAX_STEPS = int(os.environ.get("AGENT_MAX_STEPS", "6"))
 
 SYSTEM_PROMPT = (
-    "你是运行在口袋设备 Agent Box 上的桌面 agent。你可以读写工作区文件、抓取网页。"
+    "你是运行在口袋设备 CyberBadge 上的桌面 agent。你可以读写工作区文件、抓取网页。"
     "优先调用工具完成任务，最后用简洁中文总结结果。不要编造工具没有返回的内容。"
 )
 

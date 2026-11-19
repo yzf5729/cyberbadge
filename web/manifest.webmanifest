@@ -1,6 +1,6 @@
 {
-  "name": "Agent Box",
-  "short_name": "AgentBox",
+  "name": "CyberBadge",
+  "short_name": "CyberBadge",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f1115",

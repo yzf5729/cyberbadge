@@ -5,10 +5,10 @@
 1. 打开 https://github.com ，注册账号（邮箱要能收验证邮件）；
 2. 右上角 `+` → **New repository**；
 3. 填写：
-   - Repository name：`agent-box`（可换）
+   - Repository name：`cyberbadge`（可换）
    - 选 **Public**
    - **不要**勾 "Add a README file"（仓库里已经有了）
-4. 点 **Create repository**，会看到一行 `git@github.com:你的用户名/agent-box.git`。
+4. 点 **Create repository**，会看到一行 `git@github.com:你的用户名/cyberbadge.git`。
 
 ## 二、两种授权方式
 
@@ -17,11 +17,11 @@
 1. 把下面这把公钥加到 GitHub：
    - 复制公钥全文（一整行，`ssh-ed25519 ...` 开头）；
    - GitHub → 右上头像 → **Settings** → 左侧 **SSH and GPG keys** → **New SSH key**；
-   - Title 随便写（如 `agent-box deploy`），Key 粘贴，保存。
+   - Title 随便写（如 `cyberbadge deploy`），Key 粘贴，保存。
 
 2. 我这边执行推送（等同你本机 `git push`）：
    ```bash
-   git remote add origin git@github.com:<你的用户名>/agent-box.git
+   git remote add origin git@github.com:<你的用户名>/cyberbadge.git
    git push -u origin main
    ```
 

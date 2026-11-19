@@ -47,7 +47,7 @@ def http_get(url: str) -> str:
         return "只支持 http/https"
     try:
         r = httpx.get(url, timeout=25, follow_redirects=True,
-                      headers={"User-Agent": "agent-box/0.1"})
+                      headers={"User-Agent": "cyberbadge/0.1"})
         return f"HTTP {r.status_code}\n{r.text[:15000]}"
     except Exception as exc:  # noqa: BLE001
         return f"抓取失败：{exc}"

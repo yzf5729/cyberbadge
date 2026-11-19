@@ -1,4 +1,4 @@
-"""Agent Box 设备端：WebSocket 对话 + 后台任务 + PWA 静态页。"""
+"""CyberBadge 设备端：WebSocket 对话 + 后台任务 + PWA 静态页。"""
 from __future__ import annotations
 
 import asyncio
@@ -18,7 +18,7 @@ load_dotenv()
 from .agent import chat  # noqa: E402
 
 WEB_DIR = pathlib.Path(__file__).resolve().parent.parent / "web"
-app = FastAPI(title="Agent Box", version="0.1.0")
+app = FastAPI(title="CyberBadge", version="0.1.0")
 TASKS: dict[str, dict] = {}
 
 

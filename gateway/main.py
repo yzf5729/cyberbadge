@@ -11,7 +11,7 @@ import httpx
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.responses import JSONResponse
 
-app = FastAPI(title="Agent Box Gateway", version="0.1.0")
+app = FastAPI(title="CyberBadge Gateway", version="0.1.0")
 
 DEVICE_TOKEN = os.environ.get("DEVICE_TOKEN", "change-me")
 

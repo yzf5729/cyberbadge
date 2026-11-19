@@ -1,10 +1,12 @@
-# Agent Box · 口袋里的 agent 宿主
+# CyberBadge · 赛博胸牌
 
 把一台几百块的 Linux 小机器变成**常驻的 AI agent 宿主**：设备负责跑任务、管文件、控浏览器；屏幕可以不要，用手机浏览器当显示器（Borrow-Screen）；模型走云端 API，密钥由薄网关托管。
 
+> 中文名 **赛博胸牌**：目标形态是胸牌大小的随身设备，也可以先跑在任意 Linux 小主机或树莓派上。
+
 > 状态：v0.1 可运行 demo（软件部分）。硬件 BOM 与装配说明见 `docs/bom.md`。
 
-![Agent Box 架构](docs/architecture.svg)
+![CyberBadge 架构](docs/architecture.svg)
 
 ## 为什么做这个
 
@@ -12,12 +14,12 @@
 - 电脑上的 agent（Open Interpreter 等）不能随身、不能 7×24；
 - 手机 OS 会杀后台、权限受限。
 
-**Agent Box = 常驻 agent + 文件/浏览器工具 + 借屏交互**，硬件成本 250–450 元。
+**CyberBadge = 常驻 agent + 文件/浏览器工具 + 借屏交互**，硬件成本 250–450 元。
 
 ## 快速开始（零硬件，用你的电脑/树莓派）
 
 ```bash
-git clone <this-repo> && cd agent-box
+git clone <this-repo> && cd cyberbadge
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env        # 填 LLM_API_KEY（任何 OpenAI 兼容接口）
