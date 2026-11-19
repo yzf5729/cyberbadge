@@ -44,7 +44,7 @@ uvicorn device.main:app --host 0.0.0.0 --port 8000
 
 详见 [`docs/product-definition.md`](docs/product-definition.md)。
 
-## 三种形态
+## 三种形态（另有 M0 原型机）
 
 - **M1 独立版**：自带触摸屏 + 4G，脱离手机独立工作；
 - **M2 在线版**：无屏 + 4G，手机借屏，agent 永不掉线；
