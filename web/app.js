@@ -20,7 +20,13 @@ function ensureView(id) {
   v.className = 'chat-view';
   v.dataset.agent = id;
   const a = agents.find((x) => x.id === id);
-  if (a && a.kind === 'remote') {
+  if (a && a.demo) {
+    const note = document.createElement('div');
+    note.className = 'note';
+    note.textContent = '模拟演示：这是假回复，用于预览远程 agent 的界面与切换效果。';
+    v.appendChild(note);
+  }
+  if (a && a.kind === 'remote' && !a.demo) {
     const p = document.createElement('div');
     p.className = 'placeholder';
     p.textContent = `「${a.name}」远程接入将在 v1.5 上线。`;
@@ -72,7 +78,7 @@ function renderAgents() {
   for (const a of agents) {
     const btn = document.createElement('button');
     btn.className = 'agent ' + a.status + (a.id === activeAgent ? ' active' : '');
-    btn.title = `${a.name} · ${a.status}`;
+    btn.title = `${a.name} · ${a.status}${a.demo ? '（模拟）' : ''}`;
     btn.onclick = () => selectAgent(a);
     const ava = document.createElement('span');
     ava.className = 'ava';
@@ -98,7 +104,7 @@ function openAgentInfo(a) {
   const rows = [
     ['名称', a.name],
     ['ID', a.id],
-    ['类型', a.kind === 'local' ? '本地（胸牌）' : '远程'],
+    ['类型', a.kind === 'local' ? '本地（胸牌）' : (a.demo ? '远程（模拟演示）' : '远程')],
     ['状态', { online: '在线', busy: '忙碌', offline: '离线' }[a.status] || a.status],
     ['地址', a.url || '—'],
     ['能力', (a.capabilities || []).join('、') || '—'],
@@ -158,7 +164,7 @@ function send() {
   if (!text) return;
   if (!ws || ws.readyState !== WebSocket.OPEN) { statusEl.textContent = '尚未连接'; return; }
   add(text, 'user');
-  ws.send(JSON.stringify({ text }));
+  ws.send(JSON.stringify({ text, agent: activeAgent }));
   input.value = '';
   input.style.height = 'auto';
 }

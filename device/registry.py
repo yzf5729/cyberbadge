@@ -25,9 +25,10 @@ class Agent:
     capabilities: list[str] = field(default_factory=list)
     last_seen: float = 0.0
     busy: bool = False
+    demo: bool = False
 
     def status(self) -> str:
-        if self.kind == "local":
+        if self.kind == "local" or self.demo:
             return "online"
         if self.busy:
             return "busy"
@@ -38,6 +39,7 @@ class Agent:
             "id": self.id,
             "name": self.name,
             "kind": self.kind,
+            "demo": self.demo,
             "url": self.url,
             "icon": self.icon,
             "capabilities": self.capabilities,
@@ -62,6 +64,18 @@ class AgentRegistry:
         ))
         for item in self._load_remotes():
             self.register(item)
+        if os.environ.get("AGENT_DEMOS", "1") != "0":
+            for item in self._default_demos():
+                self.register(item)
+
+    @staticmethod
+    def _default_demos() -> list[Agent]:
+        return [
+            Agent(id="dsh-demo", name="DSH", kind="remote", icon="🧠", demo=True,
+                  capabilities=["chat", "files", "office", "web"]),
+            Agent(id="hermes-demo", name="霜序", kind="remote", icon="🐋", demo=True,
+                  capabilities=["chat", "memory", "image", "browser"]),
+        ]
 
     @staticmethod
     def _load_remotes() -> list[Agent]:

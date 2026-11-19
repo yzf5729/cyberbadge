@@ -17,6 +17,7 @@ load_dotenv()
 
 from .agent import chat  # noqa: E402
 from .registry import REGISTRY  # noqa: E402
+from .demo import demo_reply, demo_tool_event  # noqa: E402
 
 WEB_DIR = pathlib.Path(__file__).resolve().parent.parent / "web"
 app = FastAPI(title="CyberBadge", version="0.1.0")
@@ -46,8 +47,13 @@ async def health():
 @app.post("/api/chat")
 async def api_chat(payload: dict):
     messages = payload.get("messages", [])
+    agent_id = payload.get("agent") or "builtin"
+    agent = REGISTRY.get(agent_id)
+    if agent and agent.demo:
+        last = messages[-1]["content"] if messages else ""
+        return {"text": demo_reply(agent_id, last), "agent": agent_id, "demo": True}
     text = await chat(messages)
-    return {"text": text}
+    return {"text": text, "agent": "builtin"}
 
 
 @app.post("/api/task")
@@ -94,7 +100,15 @@ async def ws_endpoint(ws: WebSocket):
                 continue
             history.append({"role": "user", "content": user_text})
             await send({"type": "user", "text": user_text})
-            answer = await chat(history, on_event=send)
+            agent_id = data.get("agent") or "builtin"
+            agent = REGISTRY.get(agent_id)
+            if agent and agent.demo:
+                await send({"type": "tool", "name": "context.read", "args": {"agent": agent_id}})
+                await asyncio.sleep(0.6)
+                answer = demo_reply(agent_id, user_text)
+                await send({"type": "tool_result", "name": "context.read", "text": "（模拟）已读取上下文"})
+            else:
+                answer = await chat(history, on_event=send)
             history.append({"role": "assistant", "content": answer})
             await send({"type": "assistant", "text": answer})
     except WebSocketDisconnect:
