@@ -1,5 +1,8 @@
 # 产品定义 v0.1（草案）
 
+[English](product-definition.en.md) | **简体中文**
+
+
 ## 一句话
 
 **CyberBadge 是随身携带的个人设备大管家**：一个常驻的 AI agent，带着你的身份与权限，随时调度家里、办公室和云上的电脑、NAS、路由器与网关。
