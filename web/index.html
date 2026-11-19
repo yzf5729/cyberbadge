@@ -7,7 +7,7 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#0f1115">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/style.css?v=5">
+<link rel="stylesheet" href="/style.css?v=6">
 </head>
 <body>
 <header>
@@ -15,11 +15,17 @@
   <div class="status" id="status">连接中…</div>
 </header>
 <nav id="agents" class="agents" aria-label="agents"></nav>
-<main id="log"></main>
+<div id="views"></div>
 <footer>
   <textarea id="input" rows="1" placeholder="让 agent 做点什么…（回车发送）"></textarea>
   <button id="send" aria-label="发送">↑</button>
 </footer>
-<script src="/app.js?v=5"></script>
+<div id="modal" class="modal" role="dialog" aria-modal="true">
+  <div class="modal-card">
+    <div class="modal-head"><span>Agent 信息</span><button id="modal-close" aria-label="关闭">✕</button></div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+<script src="/app.js?v=6"></script>
 </body>
 </html>

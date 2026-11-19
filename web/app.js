@@ -1,21 +1,69 @@
-const log = document.getElementById('log');
+const viewsEl = document.getElementById('views');
 const input = document.getElementById('input');
 const sendBtn = document.getElementById('send');
 const statusEl = document.getElementById('status');
 const dot = document.getElementById('dot');
+const modal = document.getElementById('modal');
+const modalBody = document.getElementById('modal-body');
 
 let ws = null;
 let retry = 0;
 let agents = [];
 let activeAgent = 'builtin';
 
+// ---------- agent 视图 ----------
+
+function ensureView(id) {
+  let v = viewsEl.querySelector(`[data-agent="${id}"]`);
+  if (v) return v;
+  v = document.createElement('main');
+  v.className = 'chat-view';
+  v.dataset.agent = id;
+  const a = agents.find((x) => x.id === id);
+  if (a && a.kind === 'remote') {
+    const p = document.createElement('div');
+    p.className = 'placeholder';
+    p.textContent = `「${a.name}」远程接入将在 v1.5 上线。`;
+    if (a.url) {
+      const link = document.createElement('a');
+      link.href = a.url;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.textContent = '打开完整 WebUI ↗';
+      p.append(document.createElement('br'), link);
+    }
+    v.appendChild(p);
+  }
+  viewsEl.appendChild(v);
+  return v;
+}
+
+function showView(id) {
+  viewsEl.querySelectorAll('.chat-view').forEach((v) => {
+    v.classList.toggle('active', v.dataset.agent === id);
+  });
+}
+
+function add(text, cls) {
+  const v = ensureView(activeAgent);
+  const el = document.createElement('div');
+  el.className = 'msg ' + cls;
+  el.textContent = text;
+  v.appendChild(el);
+  v.scrollTop = v.scrollHeight;
+  return el;
+}
+
+// ---------- 头像条 ----------
+
 async function loadAgents() {
   try {
     const r = await fetch('/api/agents');
     const data = await r.json();
     agents = data.agents || [];
+    for (const a of agents) ensureView(a.id);
     renderAgents();
-  } catch (e) { /* 静默：离线时保持旧头像 */ }
+  } catch (e) { /* 离线时保持旧头像 */ }
 }
 
 function renderAgents() {
@@ -24,7 +72,7 @@ function renderAgents() {
   for (const a of agents) {
     const btn = document.createElement('button');
     btn.className = 'agent ' + a.status + (a.id === activeAgent ? ' active' : '');
-    btn.title = `${a.name} · ${a.status}` + (a.capabilities && a.capabilities.length ? `\n能力: ${a.capabilities.join(', ')}` : '');
+    btn.title = `${a.name} · ${a.status}`;
     btn.onclick = () => selectAgent(a);
     const ava = document.createElement('span');
     ava.className = 'ava';
@@ -37,21 +85,56 @@ function renderAgents() {
 }
 
 function selectAgent(a) {
-  if (a.kind === 'remote') {
-    add(`远程 agent「${a.name}」将在 v1.5 接入（当前只听本地 agent）。`, 'note');
-  }
+  if (a.id === activeAgent) { openAgentInfo(a); return; }
   activeAgent = a.id;
+  showView(a.id);
   renderAgents();
+  statusEl.textContent = `当前：${a.name}`;
 }
 
-function add(text, cls) {
-  const el = document.createElement('div');
-  el.className = 'msg ' + cls;
-  el.textContent = text;
-  log.appendChild(el);
-  log.scrollTop = log.scrollHeight;
-  return el;
+// ---------- 基本信息弹窗 ----------
+
+function openAgentInfo(a) {
+  const rows = [
+    ['名称', a.name],
+    ['ID', a.id],
+    ['类型', a.kind === 'local' ? '本地（胸牌）' : '远程'],
+    ['状态', { online: '在线', busy: '忙碌', offline: '离线' }[a.status] || a.status],
+    ['地址', a.url || '—'],
+    ['能力', (a.capabilities || []).join('、') || '—'],
+    ['最近心跳', a.last_seen ? new Date(a.last_seen * 1000).toLocaleString() : '—'],
+  ];
+  modalBody.innerHTML = '';
+  for (const [k, v] of rows) {
+    const row = document.createElement('div');
+    row.className = 'info-row';
+    const kEl = document.createElement('span');
+    kEl.className = 'k';
+    kEl.textContent = k;
+    const vEl = document.createElement('span');
+    vEl.className = 'v';
+    vEl.textContent = v;
+    row.append(kEl, vEl);
+    modalBody.appendChild(row);
+  }
+  if (a.url) {
+    const link = document.createElement('a');
+    link.className = 'info-link';
+    link.href = a.url;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.textContent = '打开完整 WebUI ↗';
+    modalBody.appendChild(link);
+  }
+  modal.classList.add('open');
 }
+
+function closeModal() { modal.classList.remove('open'); }
+document.getElementById('modal-close').onclick = closeModal;
+modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+// ---------- WebSocket ----------
 
 function connect() {
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
@@ -90,6 +173,8 @@ input.addEventListener('input', () => {
 });
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+ensureView('builtin');
+showView('builtin');
 loadAgents();
 setInterval(loadAgents, 15000);
 connect();
