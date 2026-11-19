@@ -1,0 +1,13 @@
+CyberBadge (赛博胸牌)
+Copyright (c) 2026 Z.Yang
+
+This product is distributed under the MIT License. See LICENSE for the full text.
+
+Third-party dependencies (installed via requirements.txt) keep their own licenses:
+- FastAPI (MIT)
+- Uvicorn (BSD-3-Clause)
+- HTTPX (BSD-3-Clause)
+- python-dotenv (BSD-3-Clause)
+
+Trademarks and product names mentioned in the documentation belong to their
+respective owners.

@@ -77,3 +77,6 @@ scripts/   One-command dev runner
 ## License
 
 MIT
+---
+
+© 2026 Z.Yang · [MIT License](LICENSE)

@@ -77,3 +77,6 @@ scripts/   一键启动脚本
 ## 许可
 
 MIT
+---
+
+© 2026 Z.Yang · [MIT License](LICENSE)
