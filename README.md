@@ -38,6 +38,8 @@ uvicorn device.main:app --host 0.0.0.0 --port 8000
 
 没有 API key 也能启动：会进入演示模式，并产生一条示例任务。
 
+想做**带触屏的实物**？见 [`docs/m0-build.md`](docs/m0-build.md)（M0 原型机：插电 + Wi-Fi + 5" 触屏，约 475 元）。
+
 ## 产品定义
 
 **随身携带的个人设备大管家**：常驻 AI agent 带着你的身份与权限，随时调度家里、办公室和云上的电脑、NAS、路由器与网关。
