@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 560" width="1100" height="560">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4f8cff"/>
+    </marker>
+    <style>
+      .box { fill:#171a21; stroke:#2a3140; stroke-width:2; rx:14; }
+      .accent { stroke:#4f8cff; }
+      .t { fill:#e8eaf0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif; }
+      .m { fill:#8b93a7; font-family:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif; }
+      .label { fill:#9fb4d8; font-size:12px; font-family:ui-monospace,monospace; }
+    </style>
+  </defs>
+
+  <rect width="1100" height="560" fill="#0f1115"/>
+  <text x="40" y="52" class="t" font-size="26" font-weight="700">Agent Box · 架构</text>
+  <text x="40" y="78" class="m" font-size="14">设备常驻 agent，手机借屏，模型走云端 API —— 硬件成本 250–450 元</text>
+
+  <!-- phone -->
+  <rect class="box" x="40" y="200" width="200" height="150"/>
+  <text x="140" y="238" class="t" font-size="16" font-weight="600" text-anchor="middle">手机浏览器</text>
+  <text x="140" y="262" class="m" font-size="13" text-anchor="middle">PWA 借屏</text>
+  <text x="140" y="286" class="m" font-size="12" text-anchor="middle">添加到主屏幕</text>
+  <text x="140" y="310" class="label" text-anchor="middle">无需设备屏幕</text>
+
+  <!-- device -->
+  <rect class="box accent" x="320" y="180" width="300" height="190"/>
+  <text x="470" y="218" class="t" font-size="17" font-weight="700" text-anchor="middle">Agent Box 设备</text>
+  <text x="470" y="242" class="m" font-size="13" text-anchor="middle">Linux SBC · FastAPI</text>
+  <text x="470" y="268" class="m" font-size="13" text-anchor="middle">agent 循环 + 工具调用</text>
+  <text x="470" y="292" class="m" font-size="13" text-anchor="middle">任务队列 · 记忆</text>
+  <text x="470" y="322" class="label" text-anchor="middle">work/ 沙箱</text>
+
+  <!-- gateway -->
+  <rect class="box" x="700" y="200" width="180" height="150"/>
+  <text x="790" y="238" class="t" font-size="16" font-weight="600" text-anchor="middle">薄网关</text>
+  <text x="790" y="262" class="m" font-size="13" text-anchor="middle">设备鉴权</text>
+  <text x="790" y="284" class="m" font-size="13" text-anchor="middle">配额 · Key 管理</text>
+  <text x="790" y="306" class="m" font-size="13" text-anchor="middle">多供应商切换</text>
+
+  <!-- cloud -->
+  <rect class="box" x="950" y="200" width="120" height="150"/>
+  <text x="1010" y="248" class="t" font-size="15" font-weight="600" text-anchor="middle">云端 LLM</text>
+  <text x="1010" y="272" class="m" font-size="12" text-anchor="middle">OpenAI</text>
+  <text x="1010" y="290" class="m" font-size="12" text-anchor="middle">兼容 API</text>
+
+  <!-- arrows -->
+  <line x1="242" y1="275" x2="314" y2="275" stroke="#4f8cff" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="278" y="262" class="label" text-anchor="middle">WebSocket</text>
+
+  <line x1="622" y1="275" x2="694" y2="275" stroke="#4f8cff" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="658" y="262" class="label" text-anchor="middle">HTTPS</text>
+
+  <line x1="882" y1="275" x2="944" y2="275" stroke="#4f8cff" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="913" y="262" class="label" text-anchor="middle">API</text>
+
+  <!-- tools -->
+  <text x="320" y="420" class="m" font-size="13">设备内置工具：</text>
+  <rect class="box" x="320" y="432" width="130" height="40"/>
+  <text x="385" y="457" class="m" font-size="12" text-anchor="middle">读/写文件</text>
+  <rect class="box" x="466" y="432" width="130" height="40"/>
+  <text x="531" y="457" class="m" font-size="12" text-anchor="middle">http_get</text>
+  <rect class="box" x="612" y="432" width="130" height="40"/>
+  <text x="677" y="457" class="m" font-size="12" text-anchor="middle">无头浏览器</text>
+
+  <text x="40" y="500" class="m" font-size="12">安全边界：文件工具锁定 work/；设备只持有可吊销的 DEVICE_TOKEN，上游 Key 不落设备。</text>
+  <text x="40" y="524" class="m" font-size="12">部署形态：设备开 Wi-Fi 热点 → 手机连上打开 http://10.0.0.1:8000 → 可加主屏幕离线使用。</text>
+</svg>

@@ -4,6 +4,8 @@
 
 > 状态：v0.1 可运行 demo（软件部分）。硬件 BOM 与装配说明见 `docs/bom.md`。
 
+![Agent Box 架构](docs/architecture.svg)
+
 ## 为什么做这个
 
 - 语音硬件（ESP32 那类）只能对话，跑不了 agent 任务；
