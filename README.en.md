@@ -38,6 +38,8 @@ uvicorn device.main:app --host 0.0.0.0 --port 8000
 
 Runs without an API key as well — it enters demo mode and returns a sample reply.
 
+Want actual hardware with a touchscreen? See [`docs/m0-build.md`](docs/m0-build.md) (M0 prototype: mains power + Wi-Fi + 5" touchscreen, ~US$65).
+
 ## Product definition
 
 A **pocket butler for all your personal devices**: an always-on AI agent that carries your identity and permissions and orchestrates PCs, NAS, routers and gateways at home, in the office and in the cloud.
