@@ -2,6 +2,11 @@
 
 **English** | [简体中文](README.md)
 
+[![CI](https://github.com/yzf5729/cyberbadge/actions/workflows/ci.yml/badge.svg)](https://github.com/yzf5729/cyberbadge/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
+
+
 Turn a cheap Linux board into an **always-on host for an AI agent**: the device runs tasks, manages files and drives a headless browser. No screen required — your phone becomes the display (Borrow-Screen). Models run through cloud APIs, with keys kept behind a thin gateway.
 
 > Target form factor: a badge-sized wearable. It also runs on any small Linux box or Raspberry Pi today.

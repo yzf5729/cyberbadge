@@ -2,6 +2,11 @@
 
 [English](README.en.md) | **简体中文**
 
+[![CI](https://github.com/yzf5729/cyberbadge/actions/workflows/ci.yml/badge.svg)](https://github.com/yzf5729/cyberbadge/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
+
+
 把一台几百块的 Linux 小机器变成**常驻的 AI agent 宿主**：设备负责跑任务、管文件、控浏览器；屏幕可以不要，用手机浏览器当显示器（Borrow-Screen）；模型走云端 API，密钥由薄网关托管。
 
 > 中文名 **赛博胸牌**：目标形态是胸牌大小的随身设备，也可以先跑在任意 Linux 小主机或树莓派上。

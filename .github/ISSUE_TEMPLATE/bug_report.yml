@@ -1,0 +1,33 @@
+name: Bug report
+description: Something broke or behaves unexpectedly
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: Include the error message and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. run `uvicorn device.main:app`
+        2. open http://localhost:8000
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      description: OS, Python version, device (Pi / laptop / ...)
+      placeholder: "Ubuntu 24.04, Python 3.12, Orange Pi Zero 3"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      render: shell
