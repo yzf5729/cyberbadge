@@ -48,6 +48,12 @@ uvicorn device.main:app --host 0.0.0.0 --port 8000
 
 详见 [`docs/product-definition.md`](docs/product-definition.md)。
 
+## 安全
+
+- 默认需要访问令牌：首次启动生成 `work/token.txt`，手机用 `/?token=...` 打开一次即可；
+- 只放行 Tailscale/私有网段的 8000 端口；
+- 详见 [docs/security.md](docs/security.md)。
+
 ## 三种形态（另有 M0 验证机）
 
 - **M1 独立版**：自带触摸屏 + 4G，脱离手机独立工作；

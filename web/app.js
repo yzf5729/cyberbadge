@@ -9,6 +9,18 @@ const sModal = document.getElementById('smodal');
 const sList = document.getElementById('session-list');
 const effortSel = document.getElementById('effort');
 
+// ---------- 访问令牌 ----------
+const qs = new URLSearchParams(location.search);
+let TOKEN = qs.get('token') || localStorage.getItem('cb_token') || '';
+if (qs.get('token')) {
+  localStorage.setItem('cb_token', qs.get('token'));
+  history.replaceState({}, '', location.pathname);
+}
+function api(path, opts = {}) {
+  opts.headers = { ...(opts.headers || {}), ...(TOKEN ? { Authorization: 'Bearer ' + TOKEN } : {}) };
+  return fetch(path, opts);
+}
+
 let ws = null;
 let retry = 0;
 let agents = [];
@@ -67,7 +79,7 @@ function add(text, cls) {
 
 async function loadSessions() {
   try {
-    const r = await fetch('/api/sessions');
+    const r = await api('/api/sessions');
     sessions = (await r.json()).sessions || [];
     if (!currentSession && sessions.length) currentSession = sessions[0].id;
     renderSessions();
@@ -90,7 +102,7 @@ function renderSessions() {
     del.onclick = async (e) => {
       e.stopPropagation();
       if (!confirm(`删除「${s.title}」？`)) return;
-      await fetch('/api/sessions/' + s.id, { method: 'DELETE' });
+      await api('/api/sessions/' + s.id, { method: 'DELETE' });
       if (currentSession === s.id) currentSession = null;
       await loadSessions();
       await selectSession(currentSession || (sessions[0] && sessions[0].id));
@@ -107,7 +119,7 @@ async function selectSession(sid) {
   v.innerHTML = '';
   if (sid) {
     try {
-      const r = await fetch(`/api/sessions/${sid}/messages`);
+      const r = await api(`/api/sessions/${sid}/messages`);
       const msgs = (await r.json()).messages || [];
       for (const m of msgs) add(m.content, m.role === 'user' ? 'user' : 'assistant');
     } catch (e) { /* ignore */ }
@@ -116,7 +128,7 @@ async function selectSession(sid) {
 }
 
 async function newSession() {
-  const r = await fetch('/api/sessions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+  const r = await api('/api/sessions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
   const s = await r.json();
   sessions.unshift(s);
   currentSession = s.id;
@@ -134,7 +146,7 @@ sModal.addEventListener('click', (e) => { if (e.target === sModal) sModal.classL
 
 async function loadAgents() {
   try {
-    const r = await fetch('/api/agents');
+    const r = await api('/api/agents');
     agents = (await r.json()).agents || [];
     for (const a of agents) ensureView(a.id);
     renderAgents();
@@ -196,7 +208,7 @@ async function openAgentInfo(a) {
     btn.onclick = async () => {
       btn.disabled = true; btn.textContent = '重载中…';
       try {
-        const d = await (await fetch('/api/reload', { method: 'POST' })).json();
+        const d = await (await api('/api/reload', { method: 'POST' })).json();
         btn.textContent = `已重载：${d.model}`;
       } catch (e) { btn.textContent = '重载失败'; }
       setTimeout(() => { btn.disabled = false; btn.textContent = '重载 .env 配置'; }, 2500);
@@ -208,7 +220,7 @@ async function openAgentInfo(a) {
     head.textContent = '技能';
     modalBody.appendChild(head);
     try {
-      const data = await (await fetch('/api/skills')).json();
+      const data = await (await api('/api/skills')).json();
       for (const s of data.skills || []) {
         const row = document.createElement('div');
         row.className = 'skill-row';
@@ -216,7 +228,7 @@ async function openAgentInfo(a) {
         n.textContent = s.title || s.name;
         const tg = document.createElement('input');
         tg.type = 'checkbox'; tg.checked = !!s.enabled;
-        tg.onchange = () => fetch(`/api/skills/${encodeURIComponent(s.name)}/toggle`, {
+        tg.onchange = () => api(`/api/skills/${encodeURIComponent(s.name)}/toggle`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ enabled: tg.checked }),
         });
@@ -247,7 +259,7 @@ document.addEventListener('keydown', (e) => {
 
 function connect() {
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-  ws = new WebSocket(`${proto}://${location.host}/ws`);
+  ws = new WebSocket(`${proto}://${location.host}/ws?token=${encodeURIComponent(TOKEN)}`);
   ws.onopen = () => { retry = 0; dot.className = 'dot on'; statusEl.textContent = '已连接'; loadSessions(); };
   ws.onclose = () => {
     dot.className = 'dot off'; statusEl.textContent = '已断开，重连中…';
@@ -267,7 +279,7 @@ async function send() {
   if (!text) return;
   if (!ws || ws.readyState !== WebSocket.OPEN) { statusEl.textContent = '尚未连接'; return; }
   if (!currentSession) {
-    const r = await fetch('/api/sessions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    const r = await api('/api/sessions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
     const s = await r.json();
     sessions.unshift(s); currentSession = s.id; renderSessions();
   }

@@ -20,11 +20,25 @@ from .registry import REGISTRY  # noqa: E402
 from . import store  # noqa: E402
 from . import skills as skills_mod  # noqa: E402
 from .demo import demo_reply, demo_tool_event  # noqa: E402
+from .security import guard, needs_cookie, token, audit, extract_token  # noqa: E402
 
 WEB_DIR = pathlib.Path(__file__).resolve().parent.parent / "web"
 app = FastAPI(title="CyberBadge", version="0.2.0")
 TASKS: dict[str, dict] = {}
 store.init()
+token()  # 启动即生成/加载令牌，写 work/token.txt
+
+
+@app.middleware("http")
+async def auth_middleware(request, call_next):
+    denied = await guard(request)
+    if denied is not None:
+        return denied
+    response = await call_next(request)
+    ck = needs_cookie(request)
+    if ck:
+        response.set_cookie("cb_token", ck, max_age=90 * 24 * 3600, httponly=True, samesite="lax")
+    return response
 
 
 @app.get("/api/sessions")
@@ -106,6 +120,7 @@ async def api_chat(payload: dict):
     history = store.get_messages(sid) if sid else messages[:-1]
     if sid:
         store.add_message(sid, "user", text)
+    audit({"event": "chat", "agent": "builtin", "chars": len(text), "session": sid})
     answer = await chat(history + [{"role": "user", "content": text}], effort=payload.get("effort"))
     if sid:
         store.add_message(sid, "assistant", answer)
@@ -141,6 +156,11 @@ async def get_task(task_id: str):
 
 @app.websocket("/ws")
 async def ws_endpoint(ws: WebSocket):
+    given = ws.query_params.get("token", "") or ws.cookies.get("cb_token", "")
+    if not given or given != token():
+        await ws.accept()
+        await ws.close(code=4401)
+        return
     await ws.accept()
     history: list[dict] = []
 

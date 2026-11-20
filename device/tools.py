@@ -275,10 +275,15 @@ TOOLS: list[dict[str, Any]] = [
 
 
 def execute(name: str, args: dict) -> str:
+    from .security import audit
     fn = _DISPATCH.get(name)
     if not fn:
+        audit({"event": "tool", "tool": name, "ok": False, "error": "unknown"})
         return f"未知工具：{name}"
     try:
-        return str(fn(**args))
+        out = str(fn(**args))
+        audit({"event": "tool", "tool": name, "ok": True, "bytes": len(out)})
+        return out
     except Exception as exc:  # noqa: BLE001
+        audit({"event": "tool", "tool": name, "ok": False, "error": str(exc)[:120]})
         return f"工具 {name} 出错：{exc}"
