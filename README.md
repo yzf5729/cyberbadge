@@ -40,7 +40,7 @@ uvicorn device.main:app --host 0.0.0.0 --port 8000
 
 没有 API key 也能启动：会进入演示模式，并产生一条示例任务。
 
-想做**实物验证**？见 [`docs/m0-build.md`](docs/m0-build.md)；想了解**先开发后移植**的策略，见 [`docs/portability.md`](docs/portability.md)（M0 验证机：8G 无屏 + Wi-Fi + 充电宝，约 440–530 元，手机当屏）。
+想做**实物验证**？见 [`docs/m0-build.md`](docs/m0-build.md)；想了解**先开发后移植**的策略，见 [`docs/portability.md`](docs/portability.md)；**决策记录**见 [`docs/decisions.md`](docs/decisions.md)、**项目规则**见 [`AGENTS.md`](AGENTS.md)（M0 验证机：8G 无屏 + Wi-Fi + 充电宝，约 440–530 元，手机当屏）。
 
 ## 产品定义
 
