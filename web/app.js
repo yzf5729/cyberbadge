@@ -123,6 +123,22 @@ function openAgentInfo(a) {
     row.append(kEl, vEl);
     modalBody.appendChild(row);
   }
+  if (a.kind === 'local') {
+    const btn = document.createElement('button');
+    btn.className = 'info-btn';
+    btn.textContent = '重载 .env 配置';
+    btn.onclick = async () => {
+      btn.disabled = true;
+      btn.textContent = '重载中…';
+      try {
+        const r = await fetch('/api/reload', { method: 'POST' });
+        const d = await r.json();
+        btn.textContent = `已重载：${d.model}`;
+      } catch (e) { btn.textContent = '重载失败'; }
+      setTimeout(() => { btn.disabled = false; btn.textContent = '重载 .env 配置'; }, 2500);
+    };
+    modalBody.appendChild(btn);
+  }
   if (a.url) {
     const link = document.createElement('a');
     link.className = 'info-link';

@@ -15,13 +15,19 @@ from fastapi.staticfiles import StaticFiles
 
 load_dotenv()
 
-from .agent import chat  # noqa: E402
+from .agent import chat, reload_config  # noqa: E402
 from .registry import REGISTRY  # noqa: E402
 from .demo import demo_reply, demo_tool_event  # noqa: E402
 
 WEB_DIR = pathlib.Path(__file__).resolve().parent.parent / "web"
 app = FastAPI(title="CyberBadge", version="0.1.0")
 TASKS: dict[str, dict] = {}
+
+
+@app.post("/api/reload")
+async def reload_env():
+    """改完 .env 后调用：不用重启进程即可生效。"""
+    return {"ok": True, **reload_config()}
 
 
 @app.get("/api/agents")

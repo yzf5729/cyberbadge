@@ -6,6 +6,7 @@ import os
 from typing import Awaitable, Callable
 
 import httpx
+from dotenv import load_dotenv
 
 from .tools import TOOLS, execute
 
@@ -20,6 +21,23 @@ SYSTEM_PROMPT = (
 )
 
 EventFn = Callable[[dict], Awaitable[None]] | None
+
+
+def reload_config() -> dict:
+    """重新读取 .env（覆盖内存中的配置），返回脱敏后的当前配置。"""
+    global BASE_URL, API_KEY, MODEL, MAX_STEPS
+    load_dotenv(override=True)
+    BASE_URL = os.environ.get("LLM_BASE_URL", "https://api.deepseek.com/v1").rstrip("/")
+    API_KEY = os.environ.get("LLM_API_KEY", "").strip()
+    MODEL = os.environ.get("LLM_MODEL", "deepseek-chat")
+    MAX_STEPS = int(os.environ.get("AGENT_MAX_STEPS", "6"))
+    return {
+        "base_url": BASE_URL,
+        "model": MODEL,
+        "key_set": bool(API_KEY),
+        "key_len": len(API_KEY),
+        "max_steps": MAX_STEPS,
+    }
 
 
 async def chat(messages: list[dict], on_event: EventFn = None) -> str:
