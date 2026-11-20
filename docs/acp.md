@@ -16,6 +16,11 @@ CyberBadge 用 [ACP](https://agentclientprotocol.com/)（Agent Client Protocol�
 启动：
 
 ```bash
+# 或直接 systemd（推荐）
+sudo cp scripts/cb-acp-bridge.service /etc/systemd/system/
+sudo systemctl daemon-reload && sudo systemctl enable --now cb-acp-bridge
+
+# 手动方式
 ACP_BRIDGE_TOKEN=$(cat token.txt) \
 PYTHONPATH=/root/.dsh/im/bridge/.libs \
   nohup python3 -m uvicorn acp_bridge:app --host 100.117.57.3 --port 8100 --ws websockets

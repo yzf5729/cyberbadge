@@ -23,7 +23,7 @@ from . import store  # noqa: E402
 from . import skills as skills_mod  # noqa: E402
 from .demo import demo_reply, demo_tool_event  # noqa: E402
 from .security import guard, needs_cookie, token, audit, extract_token  # noqa: E402
-from .adapters.acp import acp_chat  # noqa: E402
+from .adapters.acp import acp_chat, acp_ping  # noqa: E402
 
 WEB_DIR = pathlib.Path(__file__).resolve().parent.parent / "web"
 WORKDIR = pathlib.Path(os.environ.get("AGENT_WORKDIR", "./work")).resolve()

@@ -125,3 +125,13 @@ async def acp_chat(agent, hub_sid: str, text: str, state_path: pathlib.Path, on_
         mapping[agent.id] = remote_sid
         save_session_map(state_path, mapping)
         return answer
+
+
+async def acp_ping(url: str, token: str = "", timeout: float = 8) -> bool:
+    """轻量探测：能连上并完成 initialize 即认为在线。"""
+    try:
+        async with AcpSession(url, token) as _s:
+            pass
+        return True
+    except Exception:
+        return False
