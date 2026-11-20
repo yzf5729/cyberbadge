@@ -1,51 +1,51 @@
-# M0 建造指南（插电 + Wi-Fi + 触屏）
+# M0 建造指南（8G 无屏移动服务器）
 
-[English](m0-build.en.md) | **简体中文**
-
-> 这是最快能看到实物的一版：不装电池、不装 4G，插电即用。目标是把"胸牌形态 + 触屏 + agent"先跑通。
+> 最低成本的实物验证：**8GB 内存、无屏、Wi-Fi、充电宝供电**。界面跑在手机浏览器里（PWA），设备只做服务器。目标是用最少的钱确认"随身服务器 + 借屏"这条路径成立。
 
 ## 1. 采购清单
 
-| 件 | 推荐 | 备注 |
-|---|---|---|
-| 主板 | Orange Pi Zero 3 4GB | 有 Wi-Fi；4GB 跑 Chromium 更稳 |
-| 屏幕 | 5" HDMI 触屏 800×480（USB 触摸） | **别买 SPI 屏**，浏览器体验差 |
-| 存储 | 32GB TF（A1/A2） | 8GB 太小 |
-| 电源 | 5V/3A USB-C | 触屏也要供电，选带供电的 USB Hub 或双口电源 |
-| 外壳 | 亚克力/3D 打印 | 先不用做外壳也能跑 |
-| 线材 | HDMI 短排线、USB 线 | 短排线好看 |
+| 件 | 推荐 | 参考价 | 备注 |
+|---|---|---|---|
+| 主板 | Radxa Zero 3W 8GB 或 Orange Pi Zero 3 8GB | 260–350 | 必须 8GB；Zero 3W 做工与散热更好 |
+| 存储 | 32GB TF（A1/A2） | 30 | 8GB 太小，装完系统就没了 |
+| 散热 | 铝散热片 20×20×10mm + 导热垫 | 20 | 被动散热，别用风扇 |
+| 外壳 | 3D 打印/亚克力，带通风孔 | 40 | 先裸板也能跑 |
+| 供电 | USB-C 线 + 10,000mAh 充电宝（5V/2A 常开输出） | 10 + 80 | 选不会因小电流自动断电的型号 |
+| **合计** | | **约 440–530 元** | |
 
-## 2. 系统
+可选：USB 电流表（30 元，测真实功耗）、小 UPS/电源管理板（50–80 元，防掉电）。
 
-1. 下载 Orange Pi Zero 3 的 Armbian（Debian bookworm）镜像，用 balenaEtcher 写卡；
-2. 首次启动接 HDMI 显示器，按向导设 Wi-Fi、用户名、时区；
-3. 换到 5" 触屏，确认触摸能用（`xinput list` 能看到设备）。
+## 2. 系统（Armbian，无桌面）
 
-## 3. 软件
+1. 下载对应板子的 **Armbian Bookworm minimal**（不要带桌面镜像），balenaEtcher 写卡；
+2. 首次启动**临时接 HDMI** 完成向导：设用户名、密码、Wi-Fi（或先改 `/boot/armbian_first_run.txt` 免接屏）；
+3. 之后不再需要屏幕，全部走 SSH。
+
+## 3. 基础设置
 
 ```bash
-sudo apt update
-sudo apt install -y chromium onboard git python3-venv
-git clone https://github.com/yzf5729/cyberbadge.git
-cd cyberbadge
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y avahi-daemon git python3-venv
+sudo hostnamectl set-hostname cyberbadge
+# 手机同 Wi-Fi 即可用 http://cyberbadge.local:8000 访问
+```
+
+关闭 Wi-Fi 省电（否则待机会断连）：
+
+```bash
+sudo iw dev wlan0 set power_save off
+# 开机自动执行：写 /etc/systemd/system/wifi-powersave-off.service
+```
+
+## 4. 部署 CyberBadge
+
+```bash
+git clone https://github.com/yzf5729/cyberbadge.git ~/cyberbadge
+cd ~/cyberbadge
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env   # 填 LLM_API_KEY
+cp .env.example .env    # 填 LLM_BASE_URL / LLM_API_KEY / LLM_MODEL
 ```
-
-先手动跑一次：
-
-```bash
-uvicorn device.main:app --host 127.0.0.1 --port 8000
-```
-
-另开终端：
-
-```bash
-chromium --kiosk --noerrdialogs --disable-infobars http://127.0.0.1:8000
-```
-
-## 4. 开机自启
 
 `/etc/systemd/system/cyberbadge.service`：
 
@@ -53,42 +53,52 @@ chromium --kiosk --noerrdialogs --disable-infobars http://127.0.0.1:8000
 [Unit]
 Description=CyberBadge agent
 After=network-online.target
+Wants=network-online.target
 
 [Service]
-User=pi
-WorkingDirectory=/home/pi/cyberbadge
-ExecStart=/home/pi/cyberbadge/.venv/bin/uvicorn device.main:app --host 127.0.0.1 --port 8000
+User=你的用户名
+WorkingDirectory=/home/你的用户名/cyberbadge
+Environment=AGENT_WORKDIR=/home/你的用户名/cyberbadge/work
+ExecStart=/home/你的用户名/cyberbadge/.venv/bin/uvicorn device.main:app --host 0.0.0.0 --port 8000
 Restart=always
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
 ```
 
 ```bash
-sudo systemctl daemon-reload
-sudo systemctl enable --now cyberbadge
+sudo systemctl daemon-reload && sudo systemctl enable --now cyberbadge
+curl -s http://127.0.0.1:8000/api/health
 ```
 
-kiosk 自启（`~/.config/autostart/cyberbadge-kiosk.desktop`）：
+## 5. 手机当屏
 
-```ini
-[Desktop Entry]
-Type=Application
-Name=CyberBadge Kiosk
-Exec=chromium --kiosk --noerrdialogs --disable-infobars http://127.0.0.1:8000
-X-GNOME-Autostart-enabled=true
-```
+- 手机连同一 Wi-Fi，浏览器打开 `http://cyberbadge.local:8000`；
+- Chrome/Safari 菜单 → **添加到主屏幕**，之后像 App 一样打开；
+- 外出：手机开热点，让设备连热点（或反过来），地址不变。
 
-## 5. 验收清单
+## 6. 验收清单
 
-- [ ] 断电重启后，屏幕自动进入 agent 界面
-- [ ] 触摸点按正常，虚拟键盘能弹出
-- [ ] 说一句话能拿到回复（云端 LLM）
-- [ ] 让它"列出 /home/pi 的文件"，工具调用成功
-- [ ] 连续跑 2 小时，摸外壳不烫手（>60℃ 就要加散热片）
+- [ ] 断电重启后，手机打开页面能自动连上（无人工干预）；
+- [ ] 连续跑 24 小时，`uptime` 正常、温度 < 75℃（`cat /sys/class/thermal/thermal_zone0/temp`）；
+- [ ] 充电宝供电下，12 小时耗电 < 60%；
+- [ ] 手机端发一条消息、调用一次工具（如列目录）成功；
+- [ ] 拔电再插电，会话历史还在（SQLite 落盘）。
 
-## 6. 已知问题
+## 7. 已知问题
 
-- 800×480 下界面字小：先用浏览器缩放 125%，或等小屏 UI 优化；
-- Chromium 在 2GB 内存上会卡：优先 4GB；
-- Wi-Fi 休眠断连：`sudo iw dev wlan0 set power_save off`，或 systemd 里加 `wifi.powersave = 2`。
+| 现象 | 原因 | 处理 |
+|---|---|---|
+| 充电宝几分钟后断电 | 负载电流低于充电宝阈值 | 换"常开/小电流模式"充电宝，或加假负载 |
+| 手机打不开 `cyberbadge.local` | 路由器不支持 mDNS | 查路由器后台的设备 IP，直接用 IP |
+| Wi-Fi 待机后失联 | 网卡省电 | 第 3 节的 power_save off |
+| TF 卡文件系统损坏 | 突然断电写卡 | 尽量正常关机；或加小 UPS 板 |
+| 温度过高降频 | 被动散热不足 | 加大散热片、外壳开孔、降 CPU governor |
+
+## 8. 下一步
+
+M0 验证通过（连续 3 天稳定）后，再决定：
+- 加 4G（M2）：EC200A 类模组 + 天线，+130–170 元；
+- 换自带屏（M1）：5" HDMI 触屏，+160 元；
+- 都不急：先把 ACP 接真实 DSH/Hermes 跑通。

@@ -40,7 +40,7 @@ uvicorn device.main:app --host 0.0.0.0 --port 8000
 
 没有 API key 也能启动：会进入演示模式，并产生一条示例任务。
 
-想做**带触屏的实物**？见 [`docs/m0-build.md`](docs/m0-build.md)（M0 原型机：插电 + Wi-Fi + 5" 触屏，约 475 元）。
+想做**实物验证**？见 [`docs/m0-build.md`](docs/m0-build.md)（M0 验证机：8G 无屏 + Wi-Fi + 充电宝，约 440–530 元，手机当屏）。
 
 ## 产品定义
 

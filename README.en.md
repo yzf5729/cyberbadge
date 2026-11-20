@@ -40,7 +40,7 @@ uvicorn device.main:app --host 0.0.0.0 --port 8000
 
 Runs without an API key as well — it enters demo mode and returns a sample reply.
 
-Want actual hardware with a touchscreen? See [`docs/m0-build.md`](docs/m0-build.md) (M0 prototype: mains power + Wi-Fi + 5" touchscreen, ~US$65).
+Want to validate with real hardware? See [`docs/m0-build.md`](docs/m0-build.md) (M0: 8GB screenless server, Wi-Fi + power bank, ~US$60–75, phone as display).
 
 ## Product definition
 
