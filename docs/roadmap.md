@@ -37,6 +37,10 @@
 - [ ] 多供应商切换与计费
 - [ ] 审计日志
 
+## 平台策略
+
+业务层与系统/硬件解耦，先在 x86 上跑通再移植到 ARM（详见 [portability.md](portability.md)）。
+
 ## v1.0 · 单 agent + 工具集（当前）
 
 - [x] 本地轻量 agent（FastAPI + WebSocket + 工具循环）

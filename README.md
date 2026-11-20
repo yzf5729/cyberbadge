@@ -40,7 +40,7 @@ uvicorn device.main:app --host 0.0.0.0 --port 8000
 
 没有 API key 也能启动：会进入演示模式，并产生一条示例任务。
 
-想做**实物验证**？见 [`docs/m0-build.md`](docs/m0-build.md)（M0 验证机：8G 无屏 + Wi-Fi + 充电宝，约 440–530 元，手机当屏）。
+想做**实物验证**？见 [`docs/m0-build.md`](docs/m0-build.md)；想了解**先开发后移植**的策略，见 [`docs/portability.md`](docs/portability.md)（M0 验证机：8G 无屏 + Wi-Fi + 充电宝，约 440–530 元，手机当屏）。
 
 ## 产品定义
 
@@ -48,7 +48,7 @@ uvicorn device.main:app --host 0.0.0.0 --port 8000
 
 详见 [`docs/product-definition.md`](docs/product-definition.md)。
 
-## 三种形态（另有 M0 原型机）
+## 三种形态（另有 M0 验证机）
 
 - **M1 独立版**：自带触摸屏 + 4G，脱离手机独立工作；
 - **M2 在线版**：无屏 + 4G，手机借屏，agent 永不掉线；
