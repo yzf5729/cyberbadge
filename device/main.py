@@ -17,11 +17,54 @@ load_dotenv()
 
 from .agent import chat, reload_config  # noqa: E402
 from .registry import REGISTRY  # noqa: E402
+from . import store  # noqa: E402
+from . import skills as skills_mod  # noqa: E402
 from .demo import demo_reply, demo_tool_event  # noqa: E402
 
 WEB_DIR = pathlib.Path(__file__).resolve().parent.parent / "web"
-app = FastAPI(title="CyberBadge", version="0.1.0")
+app = FastAPI(title="CyberBadge", version="0.2.0")
 TASKS: dict[str, dict] = {}
+store.init()
+
+
+@app.get("/api/sessions")
+async def sessions_list():
+    return {"sessions": store.list_sessions()}
+
+
+@app.post("/api/sessions")
+async def sessions_create(payload: dict | None = None):
+    return store.create_session((payload or {}).get("title") or "新对话")
+
+
+@app.delete("/api/sessions/{sid}")
+async def sessions_delete(sid: str):
+    return {"ok": store.delete_session(sid)}
+
+
+@app.patch("/api/sessions/{sid}")
+async def sessions_rename(sid: str, payload: dict):
+    title = (payload.get("title") or "").strip()
+    if not title:
+        return JSONResponse({"error": "title 不能为空"}, status_code=400)
+    return {"ok": store.rename_session(sid, title)}
+
+
+@app.get("/api/sessions/{sid}/messages")
+async def sessions_messages(sid: str):
+    return {"messages": store.get_messages(sid)}
+
+
+@app.get("/api/skills")
+async def skills_list():
+    known = {r["name"]: bool(r["enabled"]) for r in store.list_skills()}
+    return {"skills": [{**s, "enabled": known.get(s["name"], True)} for s in skills_mod.scan()]}
+
+
+@app.post("/api/skills/{name}/toggle")
+async def skills_toggle(name: str, payload: dict):
+    store.set_skill(name, bool(payload.get("enabled", True)))
+    return {"ok": True, "name": name, "enabled": bool(payload.get("enabled", True))}
 
 
 @app.post("/api/reload")
@@ -58,8 +101,15 @@ async def api_chat(payload: dict):
     if agent and agent.demo:
         last = messages[-1]["content"] if messages else ""
         return {"text": demo_reply(agent_id, last), "agent": agent_id, "demo": True}
-    text = await chat(messages)
-    return {"text": text, "agent": "builtin"}
+    sid = payload.get("session_id")
+    text = messages[-1]["content"] if messages else ""
+    history = store.get_messages(sid) if sid else messages[:-1]
+    if sid:
+        store.add_message(sid, "user", text)
+    answer = await chat(history + [{"role": "user", "content": text}], effort=payload.get("effort"))
+    if sid:
+        store.add_message(sid, "assistant", answer)
+    return {"text": answer, "agent": "builtin", "session_id": sid}
 
 
 @app.post("/api/task")
@@ -108,13 +158,22 @@ async def ws_endpoint(ws: WebSocket):
             await send({"type": "user", "text": user_text})
             agent_id = data.get("agent") or "builtin"
             agent = REGISTRY.get(agent_id)
+            sid = data.get("session_id")
+            effort = data.get("effort")
             if agent and agent.demo:
                 await send({"type": "tool", "name": "context.read", "args": {"agent": agent_id}})
                 await asyncio.sleep(0.6)
                 answer = demo_reply(agent_id, user_text)
                 await send({"type": "tool_result", "name": "context.read", "text": "（模拟）已读取上下文"})
             else:
-                answer = await chat(history, on_event=send)
+                if sid:
+                    base = store.get_messages(sid)
+                    store.add_message(sid, "user", user_text)
+                    answer = await chat(base + [{"role": "user", "content": user_text}],
+                                        on_event=send, effort=effort)
+                    store.add_message(sid, "assistant", answer)
+                else:
+                    answer = await chat(history, on_event=send, effort=effort)
             history.append({"role": "assistant", "content": answer})
             await send({"type": "assistant", "text": answer})
     except WebSocketDisconnect:

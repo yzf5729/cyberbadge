@@ -58,3 +58,24 @@ button:disabled { opacity:.5; }
 .info-btn { display:block; width:100%; margin-top:14px; padding:10px; border-radius:10px;
   border:1px solid var(--line); background:var(--panel); color:var(--text); font-size:13px; }
 .info-btn:disabled { opacity:.6; }
+
+#sessions-btn { background:transparent; border:1px solid var(--line); color:var(--text);
+  width:34px; height:34px; border-radius:10px; font-size:17px; line-height:1; }
+#effort { background:var(--panel); border:1px solid var(--line); color:var(--text);
+  border-radius:9px; padding:6px 4px; font-size:12px; max-width:72px; }
+#session-list { display:flex; flex-direction:column; gap:8px; margin-top:12px; max-height:60vh; overflow:auto; }
+.session-row { display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:10px;
+  background:var(--panel); border:1px solid var(--line); cursor:pointer; }
+.session-row.active { border-color:#4a8cff; }
+.session-row .t { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; }
+.session-row .d { color:#8a90a0; font-size:12px; }
+.session-del { background:transparent; border:none; color:#8a90a0; font-size:15px; padding:2px 4px; }
+.session-del:hover { color:#ff6b6b; }
+.skill-row { display:flex; align-items:center; justify-content:space-between; gap:8px;
+  padding:8px 0; border-bottom:1px solid var(--line); font-size:13px; }
+.skill-row small { color:#8a90a0; display:block; font-size:11px; }
+.toggle { border:1px solid var(--line); background:var(--panel); color:var(--text);
+  border-radius:999px; padding:3px 10px; font-size:12px; }
+.toggle.on { border-color:#39c07f; color:#39c07f; }
+
+.info-sub { margin-top:16px; color:var(--muted); font-size:12px; }
