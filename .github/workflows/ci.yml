@@ -24,6 +24,8 @@ jobs:
       - name: Byte-compile
         run: python -m compileall -q device gateway
       - name: Smoke test
+        env:
+          AGENT_TOKEN: ci-test-token
         run: |
           cp .env.example .env
           python - <<'PY'
@@ -31,9 +33,24 @@ jobs:
           from device.main import app
 
           client = TestClient(app)
+
+          # 健康检查公开
           health = client.get("/api/health")
           assert health.status_code == 200 and health.json()["ok"] is True
-          chat = client.post("/api/chat", json={"messages": [{"role": "user", "content": "hi"}]})
+
+          # 鉴权：无令牌 401
+          assert client.get("/api/sessions").status_code == 401
+          assert client.get("/api/agents").status_code == 401
+
+          # 带令牌 200
+          auth = {"Authorization": "Bearer ci-test-token"}
+          assert client.get("/api/sessions", headers=auth).status_code == 200
+          assert client.get("/api/agents", headers=auth).status_code == 200
+          assert client.get("/api/skills", headers=auth).status_code == 200
+
+          # 无 Key 时为演示模式，仍应 200
+          chat = client.post("/api/chat", headers=auth,
+                             json={"session_id": "ci", "messages": [{"role": "user", "content": "hi"}]})
           assert chat.status_code == 200
           print("smoke ok")
           PY
