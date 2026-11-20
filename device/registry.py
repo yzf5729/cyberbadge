@@ -8,11 +8,14 @@ from __future__ import annotations
 
 import json
 import os
+import pathlib
 import threading
 import time
 from dataclasses import dataclass, field
 
 OFFLINE_AFTER_S = 90
+WORKDIR = pathlib.Path(os.environ.get("AGENT_WORKDIR", "./work")).resolve()
+ACP_AGENTS_FILE = WORKDIR / "acp_agents.json"
 
 
 @dataclass
@@ -26,6 +29,10 @@ class Agent:
     last_seen: float = 0.0
     busy: bool = False
     demo: bool = False
+    transport: str = "http"       # http | acp
+    acp_url: str = ""
+    acp_token: str = ""
+    cwd: str = "/root/.hermes"
 
     def status(self) -> str:
         if self.kind == "local" or self.demo:
@@ -44,6 +51,7 @@ class Agent:
             "icon": self.icon,
             "capabilities": self.capabilities,
             "status": self.status(),
+            "transport": self.transport,
             "last_seen": int(self.last_seen) if self.last_seen else 0,
         }
 
@@ -64,9 +72,35 @@ class AgentRegistry:
         ))
         for item in self._load_remotes():
             self.register(item)
+        for item in self._load_acp_agents():
+            self.register(item)
         if os.environ.get("AGENT_DEMOS", "1") != "0":
             for item in self._default_demos():
+                if item.id == "hermes-demo" and self.get("hermes"):
+                    continue
                 self.register(item)
+
+    @staticmethod
+    def _load_acp_agents() -> list[Agent]:
+        try:
+            raw = json.loads(ACP_AGENTS_FILE.read_text())
+        except (OSError, ValueError):
+            return []
+        out: list[Agent] = []
+        for item in raw if isinstance(raw, list) else []:
+            try:
+                out.append(Agent(
+                    id=item["id"], name=item.get("name", item["id"]),
+                    kind="remote", icon=item.get("icon", "🐋"),
+                    url=item.get("url", ""), demo=False, transport="acp",
+                    acp_url=item.get("acp_url", ""), acp_token=item.get("acp_token", ""),
+                    cwd=item.get("cwd", "/root/.hermes"),
+                    capabilities=item.get("capabilities", ["chat", "memory", "tools"]),
+                    last_seen=time.time(),
+                ))
+            except (KeyError, TypeError):
+                continue
+        return out
 
     @staticmethod
     def _default_demos() -> list[Agent]:

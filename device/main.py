@@ -23,6 +23,7 @@ from . import store  # noqa: E402
 from . import skills as skills_mod  # noqa: E402
 from .demo import demo_reply, demo_tool_event  # noqa: E402
 from .security import guard, needs_cookie, token, audit, extract_token  # noqa: E402
+from .adapters.acp import acp_chat  # noqa: E402
 
 WEB_DIR = pathlib.Path(__file__).resolve().parent.parent / "web"
 WORKDIR = pathlib.Path(os.environ.get("AGENT_WORKDIR", "./work")).resolve()
@@ -55,6 +56,7 @@ def save_settings(patch: dict) -> dict:
 
 
 SETTINGS = load_settings()
+ACP_STATE = WORKDIR / "acp_sessions.json"
 
 
 def safe_name(name: str) -> str:
@@ -231,6 +233,17 @@ async def api_chat(payload: dict):
     if agent and agent.demo:
         last = messages[-1]["content"] if messages else ""
         return {"text": demo_reply(agent_id, last), "agent": agent_id, "demo": True}
+    if agent and agent.transport == "acp":
+        sid = payload.get("session_id") or "default"
+        atts = payload.get("attachments") or []
+        text = (messages[-1]["content"] if messages else "") + attachment_block(atts)
+        if payload.get("session_id"):
+            store.add_message(sid, "user", text, {"attachments": atts})
+        audit({"event": "chat", "agent": agent.id, "chars": len(text), "session": sid})
+        answer = await acp_chat(agent, sid, text, ACP_STATE)
+        if payload.get("session_id"):
+            store.add_message(sid, "assistant", answer)
+        return {"text": answer, "agent": agent.id, "session_id": sid}
     sid = payload.get("session_id")
     atts = payload.get("attachments") or []
     text = messages[-1]["content"] if messages else ""
@@ -308,6 +321,23 @@ async def ws_endpoint(ws: WebSocket):
                 await asyncio.sleep(0.6)
                 answer = demo_reply(agent_id, user_text)
                 await send({"type": "tool_result", "name": "context.read", "text": "（模拟）已读取上下文"})
+            elif agent and agent.transport == "acp":
+                if sid:
+                    store.add_message(sid, "user", full, {"attachments": atts})
+
+                async def acp_event(ev: dict):
+                    upd = ev.get("update") or {}
+                    if ev.get("acp") in ("tool_call", "tool_call_update"):
+                        await send({"type": "tool", "name": upd.get("title") or "tool", "args": {}})
+                    elif ev.get("acp") == "agent_thought_chunk":
+                        piece = (upd.get("content") or {}).get("text") or ""
+                        if piece:
+                            await send({"type": "thought", "text": piece})
+
+                answer = await acp_chat(agent, sid or "default", full, ACP_STATE,
+                                        on_event=acp_event)
+                if sid:
+                    store.add_message(sid, "assistant", answer)
             else:
                 if sid:
                     base = store.get_messages(sid)

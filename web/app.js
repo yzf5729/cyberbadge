@@ -49,7 +49,7 @@ function ensureView(id) {
     note.textContent = '模拟演示：这是假回复，用于预览远程 agent 的界面与切换效果。';
     v.appendChild(note);
   }
-  if (a && a.kind === 'remote' && !a.demo) {
+  if (a && a.kind === 'remote' && !a.demo && a.transport !== 'acp') {
     const p = document.createElement('div');
     p.className = 'placeholder';
     p.textContent = `「${a.name}」远程接入将在 v1.5 上线。`;
