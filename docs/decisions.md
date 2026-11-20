@@ -9,8 +9,9 @@ CyberBadge 提供**运行环境 + 多 agent 切换 + 借屏 UI**，不自研通�
 
 ## D2 胸牌只当遥控器，Hub 跑在服务器/桌面
 
-4GB ARM 装不下 Chromium + DSH + Hermes 的运行栈，进程管理在 ARM 上脆弱。胸牌负责"显示 + 输入 + 常驻联网"，重活放服务器/台式机。
-版本节奏：v1 单 agent → v1.5 远程 agent 接入 → v2 本地多 agent（需 RK3588 8/16GB）。
+实测（2026-11-21，服务器 3.6GB）：DSH web 进程 RSS 约 587MB + billion-context 约 442MB ≈ 1.0GB；Hermes 容器 727MB；两者同时约 1.7–2.2GB，3.6GB 里靠 swap 才挤下。
+结论修正：**4GB 板子单独跑一个 DSH 是可能的**（约 1GB），但"DSH + Hermes + Chromium + LibreOffice 并发"不行；8GB 才是舒适线。ARM 的真正风险不在内存，而在依赖是否有 arm64 预编译（Node 官方有，个别原生模块待验证）。
+因此：胸牌负责"显示 + 输入 + 常驻联网"，重活放服务器/台式机；v2 本地多 agent 建议 8GB 起，16GB 更稳。
 
 ## D3 借屏优先，不自研手机 OS
 
