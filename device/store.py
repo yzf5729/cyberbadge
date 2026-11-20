@@ -35,6 +35,9 @@ def init() -> None:
             CREATE TABLE IF NOT EXISTS skills(name TEXT PRIMARY KEY, enabled INTEGER NOT NULL DEFAULT 1);
             """
         )
+        cols = {r["name"] for r in c.execute("PRAGMA table_info(messages)").fetchall()}
+        if "meta" not in cols:
+            c.execute("ALTER TABLE messages ADD COLUMN meta TEXT NOT NULL DEFAULT '{}'")
         row = c.execute("SELECT COUNT(*) AS n FROM sessions").fetchone()
         if row["n"] == 0:
             now = time.time()
@@ -68,18 +71,36 @@ def rename_session(sid: str, title: str) -> bool:
         return cur.rowcount > 0
 
 
+def _parse_meta(raw: str | None) -> dict:
+    if not raw:
+        return {}
+    try:
+        import json
+        v = json.loads(raw)
+        return v if isinstance(v, dict) else {}
+    except (ValueError, TypeError):
+        return {}
+
+
 def get_messages(sid: str, limit: int = 200) -> list[dict]:
     with _db() as c:
         rows = c.execute(
-            "SELECT role, content FROM messages WHERE session_id=? ORDER BY id DESC LIMIT ?", (sid, limit)
+            "SELECT role, content, meta FROM messages WHERE session_id=? ORDER BY id DESC LIMIT ?", (sid, limit)
         ).fetchall()
-    return [dict(r) for r in reversed(rows)]
+    out = []
+    for r in reversed(rows):
+        item = dict(r)
+        item["meta"] = _parse_meta(item.get("meta"))
+        out.append(item)
+    return out
 
 
-def add_message(sid: str, role: str, content: str) -> None:
+def add_message(sid: str, role: str, content: str, meta: dict | None = None) -> None:
+    import json
     now = time.time()
     with _db() as c:
-        c.execute("INSERT INTO messages(session_id,role,content,created) VALUES(?,?,?,?)", (sid, role, content, now))
+        c.execute("INSERT INTO messages(session_id,role,content,created,meta) VALUES(?,?,?,?,?)",
+                  (sid, role, content, now, json.dumps(meta or {}, ensure_ascii=False)))
         c.execute("UPDATE sessions SET updated=? WHERE id=?", (now, sid))
         if role == "user":
             row = c.execute("SELECT title FROM sessions WHERE id=?", (sid,)).fetchone()

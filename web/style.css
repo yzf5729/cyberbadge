@@ -79,3 +79,21 @@ button:disabled { opacity:.5; }
 .toggle.on { border-color:#39c07f; color:#39c07f; }
 
 .info-sub { margin-top:16px; color:var(--muted); font-size:12px; }
+
+/* 上传与设置 */
+footer { display: flex; align-items: flex-end; gap: 6px; }
+footer #attach-btn { flex: 0 0 auto; }
+#settings-btn { flex: 0 0 auto; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px 6px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; background: #1b2030; border: 1px solid #2a3142;
+  color: #cfd6e6; border-radius: 999px; padding: 3px 8px; font-size: 12px; max-width: 60vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip button { background: none; border: none; color: #8b93a7; cursor: pointer; font-size: 12px; padding: 0; }
+.att-box { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.att-box .thumb { max-width: 140px; max-height: 140px; border-radius: 10px; border: 1px solid #2a3142; }
+.att-file { font-size: 12px; color: #9aa4b8; background: #171d2a; padding: 4px 8px; border-radius: 8px; }
+.set-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 13px; }
+.set-row label { width: 84px; color: #8b93a7; flex: 0 0 auto; }
+.set-row input, .set-row select { flex: 1; background: #12161f; color: #e6e9f0; border: 1px solid #2a3142; border-radius: 8px; padding: 7px 8px; }
+.set-val { color: #cfd6e6; word-break: break-all; }
+.set-msg { font-size: 12px; color: #7fd1a0; min-height: 16px; margin-top: 6px; }
+.info-btn.ghost { background: transparent; border: 1px solid #2a3142; color: #cfd6e6; }

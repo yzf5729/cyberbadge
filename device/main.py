@@ -5,12 +5,14 @@ import asyncio
 import json
 import os
 import pathlib
+import re
+import secrets
 import time
 import uuid
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, File, Form, UploadFile, WebSocket, WebSocketDisconnect
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 load_dotenv()
@@ -23,10 +25,50 @@ from .demo import demo_reply, demo_tool_event  # noqa: E402
 from .security import guard, needs_cookie, token, audit, extract_token  # noqa: E402
 
 WEB_DIR = pathlib.Path(__file__).resolve().parent.parent / "web"
-app = FastAPI(title="CyberBadge", version="0.2.0")
+WORKDIR = pathlib.Path(os.environ.get("AGENT_WORKDIR", "./work")).resolve()
+UPLOAD_DIR = WORKDIR / "uploads"
+SETTINGS_FILE = WORKDIR / "settings.json"
+MAX_UPLOAD = 32 * 1024 * 1024
+app = FastAPI(title="CyberBadge", version="0.3.0")
 TASKS: dict[str, dict] = {}
 store.init()
 token()  # 启动即生成/加载令牌，写 work/token.txt
+
+
+def load_settings() -> dict:
+    default = {"model": "", "effort": ""}
+    try:
+        data = json.loads(SETTINGS_FILE.read_text())
+        return {**default, **(data if isinstance(data, dict) else {})}
+    except (OSError, ValueError):
+        return default
+
+
+def save_settings(patch: dict) -> dict:
+    cur = load_settings()
+    for k in ("model", "effort"):
+        if k in patch and isinstance(patch[k], str):
+            cur[k] = patch[k].strip()
+    SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    SETTINGS_FILE.write_text(json.dumps(cur, ensure_ascii=False, indent=2))
+    return cur
+
+
+SETTINGS = load_settings()
+
+
+def safe_name(name: str) -> str:
+    name = re.sub(r"[^0-9A-Za-z.\-_一-鿿]+", "_", name or "").strip("_")
+    return name[-80:] or "file"
+
+
+def attachment_block(atts: list[dict]) -> str:
+    if not atts:
+        return ""
+    lines = [f"- {a.get('name', 'file')}: {a.get('path', '')}" for a in atts if a.get("path")]
+    if not lines:
+        return ""
+    return "\n\n[附件，可用工具读取]\n" + "\n".join(lines)
 
 
 @app.middleware("http")
@@ -69,6 +111,77 @@ async def sessions_messages(sid: str):
     return {"messages": store.get_messages(sid)}
 
 
+@app.get("/api/settings")
+async def get_settings():
+    t = token()
+    return {
+        "model": SETTINGS.get("model") or os.environ.get("LLM_MODEL", "deepseek-chat"),
+        "model_is_default": not SETTINGS.get("model"),
+        "effort": SETTINGS.get("effort", ""),
+        "key_set": bool(os.environ.get("LLM_API_KEY", "").strip()),
+        "workdir": str(WORKDIR),
+        "token_masked": (t[:4] + "…" + t[-4:]) if len(t) > 12 else "…",
+    }
+
+
+@app.post("/api/settings")
+async def post_settings(payload: dict):
+    global SETTINGS
+    SETTINGS = save_settings(payload)
+    return {"ok": True, **SETTINGS}
+
+
+@app.post("/api/settings/token/rotate")
+async def rotate_token():
+    """生成新令牌并写入 work/token.txt；返回新令牌一次（前端需重新保存）。"""
+    from .security import TOKEN_FILE
+    new = secrets.token_urlsafe(24)
+    TOKEN_FILE.parent.mkdir(parents=True, exist_ok=True)
+    TOKEN_FILE.write_text(new)
+    try:
+        TOKEN_FILE.chmod(0o600)
+    except OSError:
+        pass
+    audit({"event": "token_rotate"})
+    return {"ok": True, "token": new}
+
+
+@app.post("/api/upload")
+async def upload_file(file: UploadFile = File(...), session_id: str = Form("")):
+    sid = safe_name(session_id or "common") if session_id else "common"
+    name = safe_name(file.filename or "file.bin")
+    dest_dir = UPLOAD_DIR / sid
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest = dest_dir / f"{int(time.time() * 1000)}-{name}"
+    size = 0
+    with dest.open("wb") as fh:
+        while True:
+            chunk = await file.read(1024 * 1024)
+            if not chunk:
+                break
+            size += len(chunk)
+            if size > MAX_UPLOAD:
+                fh.close()
+                dest.unlink(missing_ok=True)
+                return JSONResponse({"error": "文件超过 32MB 限制"}, status_code=413)
+            fh.write(chunk)
+    kind = "image" if (file.content_type or "").startswith("image/") else "file"
+    audit({"event": "upload", "name": name, "bytes": size, "kind": kind})
+    return {"ok": True, "name": name, "path": str(dest), "size": size, "kind": kind,
+            "url": f"/api/uploads/{sid}/{dest.name}"}
+
+
+@app.get("/api/uploads/{sid}/{name}")
+async def get_upload(sid: str, name: str):
+    sid, name = safe_name(sid), safe_name(name)
+    if sid != name and "/" in name or ".." in name:
+        return JSONResponse({"error": "bad path"}, status_code=400)
+    path = UPLOAD_DIR / sid / name
+    if not path.is_file():
+        return JSONResponse({"error": "not found"}, status_code=404)
+    return FileResponse(path)
+
+
 @app.get("/api/skills")
 async def skills_list():
     known = {r["name"]: bool(r["enabled"]) for r in store.list_skills()}
@@ -84,7 +197,10 @@ async def skills_toggle(name: str, payload: dict):
 @app.post("/api/reload")
 async def reload_env():
     """改完 .env 后调用：不用重启进程即可生效。"""
-    return {"ok": True, **reload_config()}
+    global SETTINGS
+    cfg = reload_config()
+    SETTINGS = load_settings()
+    return {"ok": True, **cfg, **SETTINGS}
 
 
 @app.get("/api/agents")
@@ -116,12 +232,16 @@ async def api_chat(payload: dict):
         last = messages[-1]["content"] if messages else ""
         return {"text": demo_reply(agent_id, last), "agent": agent_id, "demo": True}
     sid = payload.get("session_id")
+    atts = payload.get("attachments") or []
     text = messages[-1]["content"] if messages else ""
+    full = text + attachment_block(atts)
     history = store.get_messages(sid) if sid else messages[:-1]
     if sid:
-        store.add_message(sid, "user", text)
-    audit({"event": "chat", "agent": "builtin", "chars": len(text), "session": sid})
-    answer = await chat(history + [{"role": "user", "content": text}], effort=payload.get("effort"))
+        store.add_message(sid, "user", full, {"attachments": atts})
+    audit({"event": "chat", "agent": "builtin", "chars": len(text), "session": sid, "files": len(atts)})
+    answer = await chat(history + [{"role": "user", "content": full}],
+                        effort=payload.get("effort") or SETTINGS.get("effort") or None,
+                        model=SETTINGS.get("model") or None)
     if sid:
         store.add_message(sid, "assistant", answer)
     return {"text": answer, "agent": "builtin", "session_id": sid}
@@ -172,14 +292,17 @@ async def ws_endpoint(ws: WebSocket):
             raw = await ws.receive_text()
             data = json.loads(raw)
             user_text = (data.get("text") or "").strip()
-            if not user_text:
+            atts = data.get("attachments") or []
+            if not user_text and not atts:
                 continue
-            history.append({"role": "user", "content": user_text})
-            await send({"type": "user", "text": user_text})
+            full = user_text + attachment_block(atts)
+            history.append({"role": "user", "content": full})
+            await send({"type": "user", "text": user_text, "attachments": atts})
             agent_id = data.get("agent") or "builtin"
             agent = REGISTRY.get(agent_id)
             sid = data.get("session_id")
-            effort = data.get("effort")
+            effort = data.get("effort") or SETTINGS.get("effort") or None
+            use_model = SETTINGS.get("model") or None
             if agent and agent.demo:
                 await send({"type": "tool", "name": "context.read", "args": {"agent": agent_id}})
                 await asyncio.sleep(0.6)
@@ -188,12 +311,12 @@ async def ws_endpoint(ws: WebSocket):
             else:
                 if sid:
                     base = store.get_messages(sid)
-                    store.add_message(sid, "user", user_text)
-                    answer = await chat(base + [{"role": "user", "content": user_text}],
-                                        on_event=send, effort=effort)
+                    store.add_message(sid, "user", full, {"attachments": atts})
+                    answer = await chat(base + [{"role": "user", "content": full}],
+                                        on_event=send, effort=effort, model=use_model)
                     store.add_message(sid, "assistant", answer)
                 else:
-                    answer = await chat(history, on_event=send, effort=effort)
+                    answer = await chat(history, on_event=send, effort=effort, model=use_model)
             history.append({"role": "assistant", "content": answer})
             await send({"type": "assistant", "text": answer})
     except WebSocketDisconnect:

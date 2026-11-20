@@ -8,6 +8,10 @@ const modalBody = document.getElementById('modal-body');
 const sModal = document.getElementById('smodal');
 const sList = document.getElementById('session-list');
 const effortSel = document.getElementById('effort');
+const setModal = document.getElementById('setmodal');
+const chipsEl = document.getElementById('chips');
+const fileInput = document.getElementById('file-input');
+const setMsg = document.getElementById('set-msg');
 
 // ---------- 访问令牌 ----------
 const qs = new URLSearchParams(location.search);
@@ -28,6 +32,7 @@ let activeAgent = 'builtin';
 let sessions = [];
 let currentSession = null;
 let lastAssistantEl = null;
+let pending = [];
 
 // ---------- agent 视图 ----------
 
@@ -64,11 +69,35 @@ function showView(id) {
   viewsEl.querySelectorAll('.chat-view').forEach((v) => v.classList.toggle('active', v.dataset.agent === id));
 }
 
-function add(text, cls) {
+function add(text, cls, atts) {
   const v = ensureView(activeAgent);
   const el = document.createElement('div');
   el.className = 'msg ' + cls;
-  el.textContent = text;
+  if (text) {
+    const t = document.createElement('div');
+    t.textContent = text;
+    el.appendChild(t);
+  }
+  if (atts && atts.length) {
+    const box = document.createElement('div');
+    box.className = 'att-box';
+    for (const a of atts) {
+      if (a.kind === 'image' && a.url) {
+        const img = document.createElement('img');
+        img.className = 'thumb';
+        img.src = a.url;
+        img.alt = a.name || '图片';
+        img.onclick = () => window.open(a.url, '_blank');
+        box.appendChild(img);
+      } else {
+        const tag = document.createElement('span');
+        tag.className = 'att-file';
+        tag.textContent = '📄 ' + (a.name || '文件');
+        box.appendChild(tag);
+      }
+    }
+    el.appendChild(box);
+  }
   v.appendChild(el);
   v.scrollTop = v.scrollHeight;
   lastAssistantEl = cls === 'assistant' ? el : lastAssistantEl;
@@ -121,7 +150,7 @@ async function selectSession(sid) {
     try {
       const r = await api(`/api/sessions/${sid}/messages`);
       const msgs = (await r.json()).messages || [];
-      for (const m of msgs) add(m.content, m.role === 'user' ? 'user' : 'assistant');
+      for (const m of msgs) add(m.content, m.role === 'user' ? 'user' : 'assistant', (m.meta && m.meta.attachments) || []);
     } catch (e) { /* ignore */ }
   }
   renderSessions();
@@ -255,6 +284,96 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { closeModal(); sModal.classList.remove('open'); }
 });
 
+// ---------- 上传 ----------
+
+function renderChips() {
+  chipsEl.innerHTML = '';
+  for (let i = 0; i < pending.length; i++) {
+    const a = pending[i];
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    chip.textContent = (a.kind === 'image' ? '🖼 ' : '📄 ') + a.name;
+    const x = document.createElement('button');
+    x.textContent = '✕';
+    x.onclick = () => { pending.splice(i, 1); renderChips(); };
+    chip.appendChild(x);
+    chipsEl.appendChild(chip);
+  }
+}
+
+async function uploadFiles(fileList) {
+  for (const f of fileList) {
+    if (f.size > 32 * 1024 * 1024) { statusEl.textContent = `${f.name} 超过 32MB`; continue; }
+    const fd = new FormData();
+    fd.append('file', f);
+    if (currentSession) fd.append('session_id', currentSession);
+    statusEl.textContent = `上传 ${f.name}…`;
+    try {
+      const r = await api('/api/upload', { method: 'POST', body: fd });
+      const d = await r.json();
+      if (!r.ok) { statusEl.textContent = d.error || '上传失败'; continue; }
+      pending.push(d);
+      renderChips();
+      statusEl.textContent = '已连接';
+    } catch (e) { statusEl.textContent = '上传失败'; }
+  }
+}
+
+document.getElementById('attach-btn').onclick = () => fileInput.click();
+fileInput.onchange = () => { uploadFiles(fileInput.files); fileInput.value = ''; };
+
+// ---------- 设置 ----------
+
+async function openSettings() {
+  setMsg.textContent = '';
+  try {
+    const d = await (await api('/api/settings')).json();
+    document.getElementById('set-model').value = d.model || '';
+    document.getElementById('set-effort').value = d.effort || '';
+    document.getElementById('set-key').textContent = d.key_set ? '已配置' : '未配置（演示模式）';
+    document.getElementById('set-token').textContent = d.token_masked || '—';
+    document.getElementById('set-workdir').textContent = d.workdir || '—';
+  } catch (e) { setMsg.textContent = '读取设置失败'; }
+  setModal.classList.add('open');
+}
+
+document.getElementById('settings-btn').onclick = openSettings;
+document.getElementById('set-close').onclick = () => setModal.classList.remove('open');
+setModal.addEventListener('click', (e) => { if (e.target === setModal) setModal.classList.remove('open'); });
+
+document.getElementById('set-save').onclick = async () => {
+  const model = document.getElementById('set-model').value.trim();
+  const effort = document.getElementById('set-effort').value;
+  try {
+    const r = await api('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model, effort }) });
+    const d = await r.json();
+    setMsg.textContent = `已保存：${d.model || '默认'}${d.effort ? ' · ' + d.effort : ''}`;
+    effortSel.value = effort;
+  } catch (e) { setMsg.textContent = '保存失败'; }
+};
+
+document.getElementById('set-reload').onclick = async () => {
+  setMsg.textContent = '重载中…';
+  try {
+    const d = await (await api('/api/reload', { method: 'POST' })).json();
+    setMsg.textContent = `已重载：${d.model}`;
+  } catch (e) { setMsg.textContent = '重载失败'; }
+};
+
+document.getElementById('set-rotate').onclick = async () => {
+  if (!confirm('轮换后当前所有设备都需要重新用新令牌打开，继续？')) return;
+  try {
+    const d = await (await api('/api/settings/token/rotate', { method: 'POST' })).json();
+    if (!d.token) { setMsg.textContent = '轮换失败'; return; }
+    TOKEN = d.token;
+    localStorage.setItem('cb_token', TOKEN);
+    if (ws) ws.close();
+    connect();
+    setMsg.textContent = '令牌已轮换（已自动重连）';
+  } catch (e) { setMsg.textContent = '轮换失败'; }
+};
+
 // ---------- WebSocket ----------
 
 function connect() {
@@ -276,17 +395,21 @@ function connect() {
 
 async function send() {
   const text = input.value.trim();
-  if (!text) return;
+  const atts = pending.slice();
+  if (!text && !atts.length) return;
   if (!ws || ws.readyState !== WebSocket.OPEN) { statusEl.textContent = '尚未连接'; return; }
   if (!currentSession) {
     const r = await api('/api/sessions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
     const s = await r.json();
     sessions.unshift(s); currentSession = s.id; renderSessions();
   }
-  add(text, 'user');
-  ws.send(JSON.stringify({ text, agent: activeAgent, session_id: currentSession, effort: effortSel.value }));
+  add(text, 'user', atts);
+  ws.send(JSON.stringify({ text, agent: activeAgent, session_id: currentSession,
+                           effort: effortSel.value, attachments: atts }));
   input.value = '';
   input.style.height = 'auto';
+  pending = [];
+  renderChips();
 }
 
 sendBtn.onclick = send;

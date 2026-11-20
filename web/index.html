@@ -7,7 +7,7 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#0f1115">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/style.css?v=11">
+<link rel="stylesheet" href="/style.css?v=12">
 </head>
 <body>
 <header>
@@ -20,10 +20,14 @@
     <option value="medium">中</option>
     <option value="high">高</option>
   </select>
+  <button id="settings-btn" aria-label="设置">⚙</button>
 </header>
 <nav id="agents" class="agents" aria-label="agents"></nav>
 <div id="views"></div>
+<div id="chips" class="chips"></div>
 <footer>
+  <button id="attach-btn" aria-label="添加图片或文件">📎</button>
+  <input id="file-input" type="file" multiple hidden>
   <textarea id="input" rows="1" placeholder="让 agent 做点什么…（回车发送）"></textarea>
   <button id="send" aria-label="发送">↑</button>
 </footer>
@@ -34,12 +38,26 @@
     <div id="session-list"></div>
   </div>
 </div>
+<div id="setmodal" class="modal" role="dialog" aria-modal="true">
+  <div class="modal-card">
+    <div class="modal-head"><span>设置</span><button id="set-close" aria-label="关闭">✕</button></div>
+    <div class="set-row"><label>模型</label><input id="set-model" list="model-presets" placeholder="deepseek-chat"><datalist id="model-presets"><option value="deepseek-chat"><option value="deepseek-reasoner"></datalist></div>
+    <div class="set-row"><label>默认思考强度</label><select id="set-effort"><option value="">自动</option><option value="low">低</option><option value="medium">中</option><option value="high">高</option></select></div>
+    <div class="set-row"><label>Key</label><span id="set-key" class="set-val">—</span></div>
+    <div class="set-row"><label>令牌</label><span id="set-token" class="set-val">—</span></div>
+    <div class="set-row"><label>工作目录</label><span id="set-workdir" class="set-val">—</span></div>
+    <button id="set-save" class="info-btn">保存</button>
+    <button id="set-rotate" class="info-btn ghost">轮换令牌</button>
+    <button id="set-reload" class="info-btn ghost">重载 .env 配置</button>
+    <div id="set-msg" class="set-msg"></div>
+  </div>
+</div>
 <div id="modal" class="modal" role="dialog" aria-modal="true">
   <div class="modal-card">
     <div class="modal-head"><span>Agent 信息</span><button id="modal-close" aria-label="关闭">✕</button></div>
     <div id="modal-body"></div>
   </div>
 </div>
-<script src="/app.js?v=11"></script>
+<script src="/app.js?v=12"></script>
 </body>
 </html>
